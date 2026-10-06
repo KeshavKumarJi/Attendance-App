@@ -1,0 +1,36 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Custom styles for radio buttons disguised as buttons */
+.status-radio:checked + label {
+    box-shadow: inset 0 0 0 2px currentColor;
+    font-weight: 600;
+}
+
+.status-label-present {
+    color: #047857;
+    background-color: #d1fae5;
+}
+.status-radio:checked + .status-label-present {
+    background-color: #10b981;
+    color: white;
+}
+
+.status-label-absent {
+    color: #b91c1c;
+    background-color: #fee2e2;
+}
+.status-radio:checked + .status-label-absent {
+    background-color: #ef4444;
+    color: white;
+}
+
+.status-label-leave {
+    color: #b45309;
+    background-color: #fef3c7;
+}
+.status-radio:checked + .status-label-leave {
+    background-color: #f59e0b;
+    color: white;
+}

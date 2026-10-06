@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Reports - AttendancePro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-inter h-screen flex overflow-hidden">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div class="h-16 flex items-center px-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-indigo-600">Attendance<span class="text-gray-800">Pro</span></h1>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="portal.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Dashboard</a>
+            <a href="attendance.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Live Attendance</a>
+            <a href="records.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Past Records</a>
+            <a href="reports.html" class="block px-4 py-2 text-sm font-medium rounded-md bg-indigo-50 text-indigo-700">Class Reports</a>
+        </nav>
+        <div class="p-4 border-t border-gray-200">
+            <button onclick="logout()" class="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md">Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-8">
+        
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-semibold text-gray-900">Class Reports</h2>
+            <div class="flex items-center gap-2">
+                <select id="section-select" class="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="" disabled selected>Select Section</option>
+                </select>
+                <button onclick="fetchReport()" class="bg-indigo-600 text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-indigo-700">Generate</button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Enrollment No</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Classes Attended</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total Classes</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Percentage</th>
+                    </tr>
+                </thead>
+                <tbody id="report-list" class="bg-white divide-y divide-gray-200">
+                    <!-- Loaded dynamically -->
+                </tbody>
+            </table>
+            
+            <div id="empty-state" class="text-center py-12">
+                <p class="text-gray-500">Select a section and click Generate to view the report.</p>
+            </div>
+        </div>
+        
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth();
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const sections = await apiFetch('/sections');
+                const sel = document.getElementById('section-select');
+                sections.forEach(s => {
+                    sel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+                });
+            } catch(e) {
+                alert('Failed to load sections');
+            }
+        });
+
+        async function fetchReport() {
+            const sectionId = document.getElementById('section-select').value;
+            if(!sectionId) return alert("Please select a section");
+            
+            const tbody = document.getElementById('report-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Loading...</td></tr>';
+            emptyState.classList.add('hidden');
+            
+            try {
+                const reports = await apiFetch(`/reports/percentages?section_id=${sectionId}`);
+                tbody.innerHTML = '';
+                
+                if(reports.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No students found.</td></tr>';
+                    return;
+                }
+                
+                reports.forEach(r => {
+                    const isLow = r.percentage < 75;
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 ${isLow ? 'bg-red-50' : ''}">
+                            <td class="px-6 py-4 text-sm font-medium ${isLow ? 'text-red-900' : 'text-gray-900'}">${r.enrollment_no}</td>
+                            <td class="px-6 py-4 text-sm ${isLow ? 'text-red-700' : 'text-gray-700'}">${r.name}</td>
+                            <td class="px-6 py-4 text-center text-sm ${isLow ? 'text-red-700' : 'text-gray-500'}">${r.classes_attended}</td>
+                            <td class="px-6 py-4 text-center text-sm ${isLow ? 'text-red-700' : 'text-gray-500'}">${r.total_classes}</td>
+                            <td class="px-6 py-4 text-right text-sm font-bold ${isLow ? 'text-red-600' : (r.percentage >= 90 ? 'text-green-600' : 'text-gray-900')}">
+                                ${r.percentage}%
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch(e) {
+                tbody.innerHTML = '';
+                alert('Failed to load report: ' + e.message);
+            }
+        }
+    </script>
+</body>
+</html>

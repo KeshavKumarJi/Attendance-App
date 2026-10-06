@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLE Scanner | Attendance Portal</title>
+    <link rel="stylesheet" href="styles.css">
+    <meta name="description" content="Scan classroom BLE tokens.">
+</head>
+<body>
+    <div class="glass-panel">
+        <h1>Classroom Scanner</h1>
+        <p class="subtitle">Searching for Teacher's BLE Token...</p>
+        
+        <div class="radar-container" id="radar">
+            <div class="radar-pulse"></div>
+            <div class="radar-pulse"></div>
+            <div class="radar-dot"></div>
+        </div>
+
+        <div id="status-text" style="text-align: center; color: var(--text-main); margin-bottom: 1.5rem; font-weight: 600;">
+            Ready to scan.
+        </div>
+        
+        <button id="scan-btn" class="glass-btn">Start Scanning</button>
+        
+        <div class="nav-links">
+            <a href="face_verification.html" id="next-link" style="display: none;">Proceed to Face Verification ➔</a>
+        </div>
+    </div>
+
+    <script>
+        const scanBtn = document.getElementById('scan-btn');
+        const statusText = document.getElementById('status-text');
+        const nextLink = document.getElementById('next-link');
+
+        scanBtn.addEventListener('click', async () => {
+            try {
+                statusText.innerText = "Requesting Bluetooth access...";
+                // Use Web Bluetooth API to request a device (Filters can be adjusted)
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    // optionalServices: ['battery_service'] // Add specific service UUID if known
+                });
+                
+                statusText.style.color = '#4ade80';
+                statusText.innerText = `Found Token Device: ${device.name || 'Unknown Device'}`;
+                
+                // Store token/device info locally
+                localStorage.setItem('ble_token_detected', 'true');
+                
+                scanBtn.style.display = 'none';
+                nextLink.style.display = 'inline-block';
+                document.getElementById('radar').style.transform = 'scale(0.8)';
+                document.getElementById('radar').style.transition = 'transform 0.5s';
+                
+            } catch (error) {
+                statusText.style.color = '#ef4444';
+                statusText.innerText = "Scan failed or cancelled.";
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>

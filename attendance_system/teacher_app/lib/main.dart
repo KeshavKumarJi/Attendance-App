@@ -1,79 +1,87 @@
 import 'package:flutter/material.dart';
-import 'teacher_ble.dart'; // Humari engine file import ki hai
+import 'teacher_ble.dart';
 
 void main() {
-  runApp(const TeacherApp());
+  runApp(const MyApp());
 }
 
-class TeacherApp extends StatelessWidget {
-  const TeacherApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Teacher BLE App',
+      title: 'Teacher App',
       theme: ThemeData(
-        primarySwatch: Colors.indigo,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
       ),
-      home: const DashboardScreen(),
+      home: const TeacherHomePage(),
     );
   }
 }
 
-class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+class TeacherHomePage extends StatefulWidget {
+  const TeacherHomePage({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  State<TeacherHomePage> createState() => _TeacherHomePageState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
-  final TeacherBleEngine bleEngine = TeacherBleEngine();
+class _TeacherHomePageState extends State<TeacherHomePage> {
+  final TeacherBleEngine _bleEngine = TeacherBleEngine();
   bool isBroadcasting = false;
 
-  void toggleBroadcast() {
-    if (isBroadcasting) {
-      bleEngine.stopBroadcasting();
-    } else {
-      bleEngine.startBroadcasting();
-    }
-    
+  void toggleBroadcasting() {
     setState(() {
       isBroadcasting = !isBroadcasting;
     });
+
+    if (isBroadcasting) {
+      _bleEngine.startBroadcasting();
+    } else {
+      _bleEngine.stopBroadcasting();
+    }
+  }
+
+  @override
+  void dispose() {
+    _bleEngine.stopBroadcasting();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Teacher Dashboard"),
-        backgroundColor: Colors.indigo,
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Teacher BLE Dashboard'),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: <Widget>[
             Icon(
-              isBroadcasting ? Icons.bluetooth_audio : Icons.bluetooth_disabled,
+              isBroadcasting ? Icons.bluetooth_connected : Icons.bluetooth_disabled,
               size: 100,
-              color: isBroadcasting ? Colors.green : Colors.grey,
+              color: isBroadcasting ? Colors.blue : Colors.grey,
             ),
             const SizedBox(height: 20),
             Text(
-              isBroadcasting ? "Class is LIVE! Broadcasting..." : "Class is Stopped",
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              isBroadcasting ? 'Broadcasting Attendance Token...' : 'Broadcast Stopped',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 40),
             ElevatedButton(
+              onPressed: toggleBroadcasting,
               style: ElevatedButton.styleFrom(
-                backgroundColor: isBroadcasting ? Colors.red : Colors.green,
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                backgroundColor: isBroadcasting ? Colors.red : Colors.green,
+                foregroundColor: Colors.white,
               ),
-              onPressed: toggleBroadcast,
               child: Text(
-                isBroadcasting ? "END SESSION" : "START SESSION",
-                style: const TextStyle(fontSize: 18, color: Colors.white),
+                isBroadcasting ? 'STOP BROADCASTING' : 'START BROADCASTING',
+                style: const TextStyle(fontSize: 16),
               ),
             ),
           ],

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login | Attendance Portal</title>
+    <link rel="stylesheet" href="styles.css">
+    <meta name="description" content="Secure login for student attendance portal.">
+</head>
+<body>
+    <div class="glass-panel">
+        <h1>Welcome Back</h1>
+        <p class="subtitle">Enter your enrollment details to continue</p>
+        
+        <form id="login-form">
+            <input type="text" id="enrollment" class="glass-input" placeholder="Enrollment No (e.g. T1A1)" required>
+            <input type="password" id="password" class="glass-input" placeholder="Password" required>
+            
+            <button type="submit" class="glass-btn">Login to Portal</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const enrollment = document.getElementById('enrollment').value;
+            // Store locally for next pages
+            localStorage.setItem('student_enrollment', enrollment.toUpperCase());
+            // Animate out and redirect
+            document.querySelector('.glass-panel').style.opacity = '0';
+            document.querySelector('.glass-panel').style.transform = 'translateY(-20px)';
+            document.querySelector('.glass-panel').style.transition = 'all 0.4s ease';
+            
+            setTimeout(() => {
+                window.location.href = 'scanner.html';
+            }, 400);
+        });
+    </script>
+</body>
+</html>

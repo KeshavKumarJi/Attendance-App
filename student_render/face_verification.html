@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Verification | Attendance Portal</title>
+    <link rel="stylesheet" href="styles.css">
+    <meta name="description" content="Secure face verification.">
+</head>
+<body>
+    <div class="glass-panel">
+        <h1>Identity Check</h1>
+        <p class="subtitle">Please look directly at the camera to verify your identity.</p>
+        
+        <div class="webcam-container">
+            <video id="video" autoplay playsinline></video>
+            <div class="scan-line" id="scan-line"></div>
+        </div>
+
+        <button id="capture-btn" class="glass-btn">Verify Face</button>
+        <div id="result" style="text-align: center; margin-top: 1rem; font-weight: 600; display: none;"></div>
+        
+        <canvas id="canvas" style="display: none;"></canvas>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('capture-btn');
+        const scanLine = document.getElementById('scan-line');
+        const result = document.getElementById('result');
+        const canvas = document.getElementById('canvas');
+
+        // Access webcam
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                result.style.display = 'block';
+                result.style.color = '#ef4444';
+                result.innerText = "Camera access denied. Cannot verify.";
+                captureBtn.disabled = true;
+            }
+        }
+
+        initCamera();
+
+        captureBtn.addEventListener('click', () => {
+            scanLine.style.display = 'block';
+            captureBtn.innerText = "Verifying...";
+            captureBtn.disabled = true;
+
+            // Simulate capture and API call
+            setTimeout(() => {
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Get image data
+                const imageData = canvas.toDataURL('image/jpeg');
+                
+                // Stop camera
+                const stream = video.srcObject;
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+
+                scanLine.style.display = 'none';
+                
+                // Show success (Replace with actual backend call)
+                result.style.display = 'block';
+                result.style.color = '#4ade80';
+                result.innerText = "Attendance Marked Successfully! ✅";
+                
+                captureBtn.innerText = "Verified";
+                captureBtn.style.background = "#4ade80";
+                
+            }, 3000); // Simulate 3s processing
+        });
+    </script>
+</body>
+</html>
