@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AttendancePro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-inter h-screen flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div class="h-16 flex items-center px-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-indigo-600">Attendance<span class="text-gray-800">Pro</span></h1>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="portal.html" class="block px-4 py-2 text-sm font-medium rounded-md bg-indigo-50 text-indigo-700">Dashboard</a>
+            <a href="attendance.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Live Attendance</a>
+            
+            <a href="records.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Past Records</a>
+            <a href="reports.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Class Reports</a>
+        </nav>
+        <div class="p-4 border-t border-gray-200">
+            <div class="flex items-center mb-4">
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-700" id="teacher-name">Loading...</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md">Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-8">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-6">Welcome back!</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-medium text-gray-900">Mark Attendance</h3>
+                <p class="text-sm text-gray-500 mt-2">Take daily attendance for your assigned sections and batches.</p>
+                <a href="attendance.html" class="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500">Go to Attendance &rarr;</a>
+            </div>
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-medium text-gray-900">Past Records</h3>
+                <p class="text-sm text-gray-500 mt-2">View or edit attendance records from previous dates.</p>
+                <a href="records.html" class="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500">View Records &rarr;</a>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-medium text-gray-900">Class Reports</h3>
+                <p class="text-sm text-gray-500 mt-2">Check student attendance percentages and identify low attendance.</p>
+                <a href="reports.html" class="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500">View Reports &rarr;</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth();
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const teacher = await getCurrentTeacher();
+                document.getElementById('teacher-name').textContent = teacher.name;
+            } catch(e) {}
+        });
+    </script>
+</body>
+</html>

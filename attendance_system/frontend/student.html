@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal - Mark Attendance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-inter min-h-screen flex items-center justify-center p-6">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+        
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-indigo-600 mb-2">Student Portal</h1>
+            <p class="text-gray-500 text-sm">Mark your attendance using the Live BLE Token from your classroom.</p>
+        </div>
+
+        <form id="mark-form" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Your Enrollment No.</label>
+                <input type="text" id="enrollment" required placeholder="e.g. T1A1" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none uppercase font-semibold text-gray-800">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Live Classroom Token</label>
+                <input type="text" id="token" required placeholder="8-character BLE Token" class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none uppercase font-mono tracking-widest text-center text-lg">
+                <p class="text-xs text-gray-400 mt-2 text-center">Look at the teacher's terminal for the current token (Changes every 4s)</p>
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 flex items-center justify-center">
+                <span>MARK ME PRESENT</span>
+            </button>
+        </form>
+
+        <div id="result" class="mt-6 text-center hidden font-medium p-4 rounded-lg"></div>
+
+    </div>
+
+    <script>
+        document.getElementById('mark-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const resultDiv = document.getElementById('result');
+            
+            const enrollment = document.getElementById('enrollment').value.toUpperCase();
+            const token = document.getElementById('token').value.toUpperCase();
+
+            btn.innerHTML = 'Verifying...';
+            btn.disabled = true;
+            resultDiv.classList.add('hidden');
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/student/mark', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enrollment_no: enrollment, token: token })
+                });
+
+                const data = await response.json();
+
+                resultDiv.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'bg-green-50', 'text-green-700');
+                
+                if (response.ok) {
+                    resultDiv.classList.add('bg-green-50', 'text-green-700');
+                    resultDiv.textContent = '✅ ' + data.message;
+                } else {
+                    resultDiv.classList.add('bg-red-50', 'text-red-700');
+                    resultDiv.textContent = '❌ ' + (data.detail || 'Error marking attendance');
+                }
+            } catch (err) {
+                resultDiv.classList.remove('hidden');
+                resultDiv.classList.add('bg-red-50', 'text-red-700');
+                resultDiv.textContent = '❌ Server Error';
+            } finally {
+                btn.innerHTML = 'MARK ME PRESENT';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

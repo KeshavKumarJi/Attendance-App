@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLE Emitter - AttendancePro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-inter h-screen flex overflow-hidden">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div class="h-16 flex items-center px-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-indigo-600">Attendance<span class="text-gray-800">Pro</span></h1>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="portal.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Dashboard</a>
+            <a href="attendance.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Live Attendance</a>
+            
+            <a href="records.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Past Records</a>
+            <a href="reports.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Class Reports</a>
+        </nav>
+        <div class="p-4 border-t border-gray-200">
+            <button onclick="logout()" class="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md">Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-8 flex flex-col items-center justify-center">
+        
+        <div class="bg-white p-10 rounded-2xl shadow-sm border border-gray-100 text-center max-w-md w-full">
+            <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/-2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+            </div>
+            
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Classroom BLE Emitter</h2>
+            <p class="text-sm text-gray-500 mb-8">Click Start to begin broadcasting the secure Bluetooth token. Students must scan this signal to mark attendance.</p>
+            
+            <div class="space-y-4">
+                <button id="start-btn" onclick="startBLE()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                    START BROADCAST
+                </button>
+                <button id="stop-btn" onclick="stopBLE()" class="w-full bg-red-100 text-red-600 py-3 rounded-xl font-semibold hover:bg-red-200 transition hidden">
+                    STOP BROADCAST
+                </button>
+            </div>
+
+            <div id="status-text" class="mt-6 text-sm font-medium text-gray-400">
+                Status: Inactive
+            </div>
+        </div>
+        
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth();
+
+        async function startBLE() {
+            const startBtn = document.getElementById('start-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const statusText = document.getElementById('status-text');
+
+            try {
+                startBtn.textContent = 'Starting...';
+                await apiFetch('/ble/start', { method: 'POST' });
+                
+                startBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+                
+                statusText.innerHTML = 'Status: <span class="text-green-500">Broadcasting Secure Token...</span>';
+                
+                // Add simple pulse animation
+                document.querySelector('.bg-blue-100').classList.add('animate-pulse');
+            } catch(e) {
+                alert('Failed to start BLE: ' + e.message);
+                startBtn.textContent = 'START BROADCAST';
+            }
+        }
+
+        async function stopBLE() {
+            const startBtn = document.getElementById('start-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const statusText = document.getElementById('status-text');
+
+            try {
+                await apiFetch('/ble/stop', { method: 'POST' });
+                
+                stopBtn.classList.add('hidden');
+                startBtn.classList.remove('hidden');
+                startBtn.textContent = 'START BROADCAST';
+                
+                statusText.innerHTML = 'Status: Inactive';
+                document.querySelector('.bg-blue-100').classList.remove('animate-pulse');
+            } catch(e) {
+                alert('Failed to stop BLE: ' + e.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Attendance - AttendancePro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-inter h-screen flex overflow-hidden">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col z-10">
+        <div class="h-16 flex items-center px-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-indigo-600">Attendance<span class="text-gray-800">Pro</span></h1>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="portal.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Dashboard</a>
+            <a href="attendance.html" class="block px-4 py-2 text-sm font-medium rounded-md bg-indigo-50 text-indigo-700">Live Attendance</a>
+            
+            <a href="records.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Past Records</a>
+            <a href="reports.html" class="block px-4 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50">Class Reports</a>
+        </nav>
+        <div class="p-4 border-t border-gray-200">
+            <button onclick="logout()" class="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md">Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-8">
+        
+        <!-- Setup Phase -->
+        <div id="setup-phase" class="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">Start Auto-Attendance Session</h2>
+                <p class="text-gray-500 mt-1">Select class details to begin broadcasting BLE signal and start tracking students automatically.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Section</label>
+                    <select id="section-select" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2.5 border outline-none">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Batch</label>
+                    <select id="batch-select" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2.5 border outline-none">
+                        <option value="BOTH">Both Batches (A + B)</option>
+                        <option value="A">Batch A Only</option>
+                        <option value="B">Batch B Only</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Duration (Minutes)</label>
+                    <select id="duration-select" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2.5 border outline-none">
+                        <option value="5">5 Minutes (Quick Proxy Check)</option>
+                        <option value="10">10 Minutes</option>
+                        <option value="45">45 Minutes</option>
+                        <option value="60" selected>1 Hour</option>
+                        <option value="120">2 Hours</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <button id="start-session-btn" onclick="startAutoSession()" class="w-full bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">
+                    START LIVE SESSION & BLE BROADCAST
+                </button>
+            </div>
+        </div>
+
+        <!-- Live Tracking Phase -->
+        <div id="live-phase" class="hidden max-w-5xl mx-auto">
+            <div class="flex justify-between items-center mb-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <div class="relative flex h-4 w-4">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-4 w-4 bg-indigo-500"></span>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900">Session Live Tracking</h2>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-1" id="session-info-text">BLE Broadcasting Active. Waiting for students to scan...</p>
+                </div>
+                <div class="flex gap-4">
+                    <div class="text-center px-4 py-2 bg-green-50 rounded-lg border border-green-100">
+                        <div class="text-xs text-green-600 font-bold uppercase tracking-wider">Present</div>
+                        <div class="text-2xl font-black text-green-700" id="present-count">0</div>
+                    </div>
+                    <div class="text-center px-4 py-2 bg-red-50 rounded-lg border border-red-100">
+                        <div class="text-xs text-red-600 font-bold uppercase tracking-wider">Absent</div>
+                        <div class="text-2xl font-black text-red-700" id="absent-count">0</div>
+                    </div>
+                    <button onclick="endSession()" class="bg-gray-900 text-white font-semibold px-6 py-2 rounded-xl hover:bg-gray-800 transition">
+                        END SESSION
+                    </button>
+                </div>
+            </div>
+
+            <!-- Student Grid -->
+            <div id="student-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Populated via Polling -->
+            </div>
+        </div>
+
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth();
+        
+        let activeSessionId = null;
+        let pollInterval = null;
+
+        async function loadSections() {
+            try {
+                const sections = await apiFetch('/sections');
+                const select = document.getElementById('section-select');
+                sections.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = `Section ${s.name}`;
+                    select.appendChild(opt);
+                });
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        async function startAutoSession() {
+            const sectionId = document.getElementById('section-select').value;
+            const batchType = document.getElementById('batch-select').value;
+            const duration = parseInt(document.getElementById('duration-select').value);
+            
+            if(!sectionId) return alert('Select section');
+            
+            const btn = document.getElementById('start-session-btn');
+            btn.innerHTML = 'Starting...';
+            btn.disabled = true;
+
+            const now = new Date();
+            
+            // Get local date properly (avoid UTC midnight offset issues)
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+            
+            const startTimeStr = now.toTimeString().split(' ')[0];
+            
+            const endTimeDate = new Date(now.getTime() + duration*60000);
+            const endTimeStr = endTimeDate.toTimeString().split(' ')[0];
+
+            try {
+                const session = await apiFetch('/attendance/auto_session', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        section_id: parseInt(sectionId),
+                        batch_type: batchType,
+                        date: dateStr,
+                        start_time: startTimeStr,
+                        end_time: endTimeStr
+                    })
+                });
+
+                activeSessionId = session.id;
+                
+                document.getElementById('setup-phase').classList.add('hidden');
+                document.getElementById('live-phase').classList.remove('hidden');
+                
+                // Start polling every 2 seconds
+                pollSessionData();
+                pollInterval = setInterval(pollSessionData, 2000);
+                
+            } catch (e) {
+                alert('Error starting session: ' + e.message);
+                btn.innerHTML = 'START LIVE SESSION & BLE BROADCAST';
+                btn.disabled = false;
+            }
+        }
+
+        async function pollSessionData() {
+            if(!activeSessionId) return;
+            try {
+                const data = await apiFetch(`/attendance/session/${activeSessionId}/live`);
+                renderStudentGrid(data.records);
+            } catch(e) {
+                console.error("Polling error:", e);
+            }
+        }
+
+        function renderStudentGrid(records) {
+            const grid = document.getElementById('student-grid');
+            let presentCount = 0;
+            let absentCount = 0;
+            
+            grid.innerHTML = ''; // Clear current
+            
+            records.forEach(rec => {
+                if(rec.status === 'PRESENT') presentCount++;
+                else absentCount++;
+                
+                const isPresent = rec.status === 'PRESENT';
+                const cardClass = isPresent ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200';
+                const statusBadge = isPresent ? 
+                    '<span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-md uppercase">Present</span>' : 
+                    '<span class="px-2 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-md uppercase">Absent</span>';
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border shadow-sm flex justify-between items-center transition-colors duration-300 ${cardClass}`;
+                card.innerHTML = `
+                    <div>
+                        <div class="text-sm font-medium text-gray-500">${rec.enrollment_no}</div>
+                        <div class="font-bold text-gray-900">${rec.name}</div>
+                    </div>
+                    <div>
+                        ${statusBadge}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            
+            document.getElementById('present-count').textContent = presentCount;
+            document.getElementById('absent-count').textContent = absentCount;
+        }
+
+        async function endSession() {
+            if(!confirm("Are you sure you want to end this live session and turn off BLE?")) return;
+            
+            clearInterval(pollInterval);
+            
+            try {
+                await apiFetch('/attendance/session/' + activeSessionId + '/end', { method: 'POST' });
+                alert("Session ended. All unmarked students remain absent.");
+                window.location.reload();
+            } catch(e) {
+                alert('Failed to stop BLE: ' + e.message);
+            }
+        }
+
+        async function checkActiveSession() {
+            try {
+                // Fetch today's sessions
+                const sessions = await apiFetch('/attendance/sessions');
+                if (!sessions || sessions.length === 0) return;
+                
+                const now = new Date();
+                const currentTime = now.toTimeString().split(' ')[0]; // "HH:MM:SS"
+                
+                // Find if there is an active session right now
+                const activeSession = sessions.find(s => s.start_time <= currentTime && s.end_time >= currentTime);
+                
+                if (activeSession) {
+                    console.log("Found active session, resuming UI...", activeSession);
+                    activeSessionId = activeSession.id;
+                    
+                    document.getElementById('setup-phase').classList.add('hidden');
+                    document.getElementById('live-phase').classList.remove('hidden');
+                    
+                    pollSessionData();
+                    pollInterval = setInterval(pollSessionData, 2000);
+                }
+            } catch(e) {
+                console.error("Error checking active sessions:", e);
+            }
+        }
+
+        window.onload = async () => {
+            await loadSections();
+            await checkActiveSession();
+        };
+    </script>
+</body>
+</html>
