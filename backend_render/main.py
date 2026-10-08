@@ -44,8 +44,8 @@ def seed_database():
                 default_section = db.query(models.Section).first()
                 if default_section:
                     students = [
-                        models.Student(name="Rahul Kumar", roll_no="101", enrollment_no="T1A1", section_id=default_section.id, face_registered=False, face_encoding=""),
-                        models.Student(name="Priya Sharma", roll_no="102", enrollment_no="T1A2", section_id=default_section.id, face_registered=False, face_encoding="")
+                        models.Student(name="Rahul Kumar", batch="A", enrollment_no="T1A1", section_id=default_section.id, face_registered=False, face_encoding=""),
+                        models.Student(name="Priya Sharma", batch="B", enrollment_no="T1A2", section_id=default_section.id, face_registered=False, face_encoding="")
                     ]
                     db.add_all(students)
                     
