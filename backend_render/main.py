@@ -6,24 +6,51 @@ from sqlalchemy import func
 from datetime import date, timedelta
 import models, schemas, database, auth
 from ble_engine import ble_service
-import numpy as np
+# import numpy as np
 from fastapi import File, UploadFile
 import os
 import shutil
-from deepface import DeepFace
+# from deepface import DeepFace
 
-def find_cosine_distance(source_representation, test_representation):
-    a = np.matmul(np.transpose(source_representation), test_representation)
-    b = np.sum(np.multiply(source_representation, source_representation))
-    c = np.sum(np.multiply(test_representation, test_representation))
-    return 1 - (a / (np.sqrt(b) * np.sqrt(c)))
+# def find_cosine_distance(source_representation, test_representation):
+#     a = np.matmul(np.transpose(source_representation), test_representation)
+#     b = np.sum(np.multiply(source_representation, source_representation))
+#     c = np.sum(np.multiply(test_representation, test_representation))
+#     return 1 - (a / (np.sqrt(b) * np.sqrt(c)))
+
+# Create all database tables
+models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="Class Attendance Management System")
+
+@app.on_event("startup")
+def seed_database():
+    db = database.SessionLocal()
+    try:
+        # Check if any teacher exists
+        if not db.query(models.Teacher).first():
+            # Create default admin teacher
+            hashed_password = auth.get_password_hash("admin123")
+            admin = models.Teacher(name="Admin Teacher", username="admin", password_hash=hashed_password)
+            db.add(admin)
+            
+            # Create a default section just in case
+            if not db.query(models.Section).first():
+                section = models.Section(name="CSE - A")
+                db.add(section)
+                
+            db.commit()
+            print("Database seeded with default admin teacher!")
+    except Exception as e:
+        print("Error seeding database:", e)
+    finally:
+        db.close()
+
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -226,33 +253,10 @@ async def student_mark_attendance(
     if not student:
         raise HTTPException(status_code=404, detail="Student not found.")
         
-    if not student.face_registered or not student.face_encoding:
-        raise HTTPException(status_code=400, detail="Student face not registered.")
-        
-    # Process uploaded live image to get face encoding
-    img_path = f"temp_mark_face_{enrollment_no}.jpg"
-    try:
-        with open(img_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-            
-        embedding_objs = DeepFace.represent(img_path=img_path, model_name="Facenet", enforce_detection=False)
-        if len(embedding_objs) == 0:
-            raise HTTPException(status_code=400, detail="No face detected in the live photo! Try again.")
-            
-        live_encoding = embedding_objs[0]["embedding"]
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Face extraction error: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-    finally:
-        if os.path.exists(img_path):
-            os.remove(img_path)
-            
-    distance = find_cosine_distance(student.face_encoding, live_encoding)
-    similarity_percentage = (1 - distance) * 100
-    
-    if similarity_percentage < 70.0:
-        raise HTTPException(status_code=400, detail=f"Face verification failed. Only {similarity_percentage:.1f}% match found. Minimum 70% required!")
+    # === FACE VERIFICATION BYPASSED FOR NOW ===
+    # image processing and deepface logic is commented out temporarily.
+    similarity_percentage = 100.0
+    # ==========================================
         
     # 3. Find active session
     from datetime import datetime
@@ -339,17 +343,34 @@ async def register_face_api(enrollment_no: str, file: UploadFile = File(...), db
     if not student:
         raise HTTPException(status_code=404, detail=f"Student with Enrollment '{enrollment_no}' not found.")
         
+    if student.face_registered:
+        raise HTTPException(status_code=400, detail=f"Student {student.name} is already registered! Registration can only be done once.")
+        
     img_path = f"temp_api_face_{enrollment_no}.jpg"
     try:
         with open(img_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        embedding_objs = DeepFace.represent(img_path=img_path, model_name="Facenet", enforce_detection=False)
-        
-        if len(embedding_objs) == 0:
-            raise HTTPException(status_code=400, detail="No face detected in the uploaded image! Try again.")
+        # Fix mobile camera rotation issues
+        # try:
+        #     from PIL import Image, ImageOps
+        #     img = Image.open(img_path)
+        #     img = ImageOps.exif_transpose(img)
+        #     if img.mode != "RGB":
+        #         img = img.convert("RGB")
+        #     img.save(img_path)
+        # except Exception:
+        #     pass
             
-        embedding = embedding_objs[0]["embedding"]
+        # embedding_objs = DeepFace.represent(img_path=img_path, model_name="Facenet", enforce_detection=True)
+        # 
+        # if len(embedding_objs) == 0:
+        #     raise HTTPException(status_code=400, detail="No face detected in the uploaded image! Try again.")
+        #     
+        # embedding = embedding_objs[0]["embedding"]
+        
+        # Mock embedding for now since DeepFace is disabled
+        embedding = [0.0] * 128
         
         student.face_encoding = embedding
         student.face_registered = True
