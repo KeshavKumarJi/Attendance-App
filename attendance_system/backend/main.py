@@ -18,12 +18,39 @@ import shutil
 #     c = np.sum(np.multiply(test_representation, test_representation))
 #     return 1 - (a / (np.sqrt(b) * np.sqrt(c)))
 
+# Create all database tables
+models.Base.metadata.create_all(bind=database.engine)
+
 app = FastAPI(title="Class Attendance Management System")
+
+@app.on_event("startup")
+def seed_database():
+    db = database.SessionLocal()
+    try:
+        # Check if any teacher exists
+        if not db.query(models.Teacher).first():
+            # Create default admin teacher
+            hashed_password = auth.get_password_hash("admin123")
+            admin = models.Teacher(name="Admin Teacher", username="admin", password_hash=hashed_password)
+            db.add(admin)
+            
+            # Create a default section just in case
+            if not db.query(models.Section).first():
+                section = models.Section(name="CSE - A")
+                db.add(section)
+                
+            db.commit()
+            print("Database seeded with default admin teacher!")
+    except Exception as e:
+        print("Error seeding database:", e)
+    finally:
+        db.close()
+
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
