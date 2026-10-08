@@ -269,10 +269,11 @@ async def student_mark_attendance(
     # ==========================================
         
     # 3. Find active session
-    from datetime import datetime
-    now_time = datetime.now().time()
-    today = date.today()
-    
+    from datetime import datetime, timedelta, timezone
+    ist = timezone(timedelta(hours=5, minutes=30))
+    now = datetime.now(ist)
+    now_time = now.time()
+    today = now.date()
     session = db.query(models.AttendanceSession).filter(
         models.AttendanceSession.date == today,
         models.AttendanceSession.section_id == student.section_id,
