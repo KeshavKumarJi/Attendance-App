@@ -62,7 +62,7 @@ class TeacherBleEngine {
 
         AdvertiseSettings advertiseSettings = AdvertiseSettings(
           advertiseMode: AdvertiseMode.advertiseModeBalanced,
-          txPowerLevel: AdvertiseTxPower.advertiseTxPowerHigh,
+          txPowerLevel: AdvertiseTxPower.advertiseTxPowerMedium,
           connectable: false,
         );
 

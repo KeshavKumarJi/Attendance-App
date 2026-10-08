@@ -34,8 +34,19 @@ class StudentAttendanceTester:
 
         if not device or not self.latest_beacon:
             print("\n[RESULT] ❌ FAILED - No Bluetooth signal found from the Teacher's phone.")
-            print("Make sure Teacher has started the Live Session on their Flutter app!")
-            return
+            print("Trying to fallback to simulated local token for testing API...")
+            try:
+                with open("simulated_ble_air.txt", "r") as f:
+                    content = f.read().strip()
+                    if "," in content:
+                        room, token = content.split(",", 1)
+                        self.latest_beacon = {"room": room, "token": token, "rssi": -50}
+                        print(f"Fallback SUCCESS: Using token {token}")
+            except Exception as e:
+                pass
+            
+            if not self.latest_beacon:
+                return
 
         print(f"\n[BLE DATA HEARD] Room: {self.latest_beacon['room']} | Token: {self.latest_beacon['token']} | RSSI: {self.latest_beacon['rssi']} dBm")
         
@@ -108,11 +119,14 @@ class StudentAttendanceTester:
 
         print("\n[NETWORK] Sending Attendance to Server...")
         try:
-            response = requests.post(API_URL, json={
-                "enrollment_no": self.enrollment_no,
-                "token": self.latest_beacon['token'],
-                "face_encoding": face_encoding
-            })
+            # We must send a Multipart Form Data request because backend expects a live photo File
+            with open("temp_face.jpg", "rb") as image_file:
+                files = {'file': ('temp_face.jpg', image_file, 'image/jpeg')}
+                data = {
+                    "enrollment_no": self.enrollment_no,
+                    "token": self.latest_beacon['token']
+                }
+                response = requests.post(API_URL, data=data, files=files)
             
             result = response.json()
             if response.status_code == 200:
