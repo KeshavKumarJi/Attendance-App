@@ -34,13 +34,23 @@ def seed_database():
             admin = models.Teacher(name="Admin Teacher", username="admin", password_hash=hashed_password)
             db.add(admin)
             
-            # Create a default section just in case
             if not db.query(models.Section).first():
                 section = models.Section(name="CSE - A")
                 db.add(section)
+                db.commit() # commit section first so we can use its ID
                 
+            # --- Auto-Seed Default Students for Testing ---
+            if not db.query(models.Student).first():
+                default_section = db.query(models.Section).first()
+                if default_section:
+                    students = [
+                        models.Student(name="Rahul Kumar", roll_no="101", enrollment_no="T1A1", section_id=default_section.id, face_registered=False, face_encoding=""),
+                        models.Student(name="Priya Sharma", roll_no="102", enrollment_no="T1A2", section_id=default_section.id, face_registered=False, face_encoding="")
+                    ]
+                    db.add_all(students)
+                    
             db.commit()
-            print("Database seeded with default admin teacher!")
+            print("Database seeded with default admin teacher, section, and test students!")
     except Exception as e:
         print("Error seeding database:", e)
     finally:
